@@ -80,7 +80,7 @@ static bool zswap_enabled __read_mostly;
 module_param_named(enabled, zswap_enabled, bool, 0444);
 
 /* Compressor to be used by zswap (fixed at boot for now) */
-#define ZSWAP_COMPRESSOR_DEFAULT "lz4"
+#define ZSWAP_COMPRESSOR_DEFAULT "lzo"
 static char *zswap_compressor = ZSWAP_COMPRESSOR_DEFAULT;
 module_param_named(compressor, zswap_compressor, charp, 0444);
 
@@ -815,6 +815,10 @@ static void zswap_frontswap_invalidate_area(unsigned type)
 	kfree(tree);
 	zswap_trees[type] = NULL;
 }
+
+static const struct zpool_ops zswap_zpool_ops = {
+	.evict = zswap_writeback_entry
+};
 
 static void zswap_frontswap_init(unsigned type)
 {
