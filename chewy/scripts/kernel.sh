@@ -23,27 +23,22 @@ if [[ -z ${KERNELDIR} ]]; then
     exit 1;
 fi
 
-export DEVICE=$1;
-if [[ -z ${DEVICE} ]]; then
-    export DEVICE="mido";
-fi
-
-export SRCDIR="${KERNELDIR}/${DEVICE}";
+export SRCDIR="${KERNELDIR}";
 export OUTDIR="${KERNELDIR}/out";
 export ANYKERNEL="${KERNELDIR}/chewy/aroma/anykernel/";
 export AROMA="${KERNELDIR}/chewy/aroma/";
 export ARCH="arm64";
 export SUBARCH="arm64";
 export KBUILD_BUILD_USER="raphielscape"
-export KBUILD_BUILD_HOST="semaphorebox"
+export KBUILD_BUILD_HOST="nHentaiBox"
 export TOOLCHAIN="${HOME}/GNU/GCC7/";
 export DEFCONFIG="raph_defconfig";
 export ZIP_DIR="${KERNELDIR}/chewy/files/";
 export IMAGE="${OUTDIR}/arch/${ARCH}/boot/Image.gz-dtb";
 
 if [[ -z "${JOBS}" ]]; then
-    export JOBS="$(grep -c '^processor' /proc/cpuinfo)";
-#    export JOBS=64;
+#    export JOBS="$(grep -c '^processor' /proc/cpuinfo)";
+    export JOBS=64;
 fi
 
 export MAKE="make O=${OUTDIR}";
