@@ -755,7 +755,7 @@ int get_nohz_timer_target(int pinned)
 
 	rcu_read_lock();
 	for_each_domain(cpu, sd) {
-		for_each_cpu(i, sched_domain_span(sd)) {
+		for_each_cpu_and(i, sched_domain_span(sd), cpu_online_mask) {
 			if (!idle_cpu(i)) {
 				cpu = i;
 				goto unlock;
