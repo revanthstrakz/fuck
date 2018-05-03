@@ -34,28 +34,12 @@ set_perm(0, 0, 0777, "/tmp/anykernel/tools/unpackbootimg");
 set_progress(0.5);
 ui_print("Doing sum fuk, lemme smash");
 package_extract_file("config/init.qcom.post_boot.sh", "/vendor/bin/init.qcom.post_boot.sh");
-package_extract_file("config/buildconfig.sh", "/tmp/buildconfig.sh");
-package_extract_file("config/buildcustomconfig.sh", "/tmp/buildcustomconfig.sh");
-set_perm(0, 0, 0777, "/tmp/buildconfig.sh");
-set_perm(0, 0, 0777, "/tmp/buildcustomconfig.sh");
 set_perm(0, 0, 0777, "/vendor/bin/init.qcom.post_boot.sh");
 
 set_progress(0.6);
 ui_print("Running Setup Smash...");
 run_program("/tmp/busybox", "fstrim", "/cache");
 run_program("/tmp/busybox", "fstrim", "/data");
-
-set_progress(0.7);
-ui_print("Creating Smash...");
-if
-  file_getprop("/tmp/aroma/menu.prop","selected") == "2"
-then
-set_perm(0, 0, 0777, "/tmp/buildcustomconfig.sh");
-run_program("/tmp/buildcustomconfig.sh");
-else
-set_perm(0, 0, 0777, "/tmp/buildconfig.sh");
-run_program("/tmp/buildconfig.sh");
-endif;
 
 set_progress(0.8);
 ui_print("@Installing Kernel using AnyKernel2");
