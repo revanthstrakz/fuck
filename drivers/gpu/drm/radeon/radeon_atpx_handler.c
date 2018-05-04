@@ -10,6 +10,7 @@
 #include <linux/slab.h>
 #include <linux/acpi.h>
 #include <linux/pci.h>
+#include <linux/delay.h>
 
 #include "radeon_acpi.h"
 
@@ -146,6 +147,10 @@ static void radeon_atpx_parse_functions(struct radeon_atpx_functions *f, u32 mas
  */
 static int radeon_atpx_validate(struct radeon_atpx *atpx)
 {
+	/* make sure required functions are enabled */
+	/* dGPU power control is required */
+	atpx->functions.power_cntl = true;
+
 	if (atpx->functions.px_params) {
 		union acpi_object *info;
 		struct atpx_px_params output;
@@ -256,6 +261,10 @@ static int radeon_atpx_set_discrete_state(struct radeon_atpx *atpx, u8 state)
 		if (!info)
 			return -EIO;
 		kfree(info);
+
+		/* 200ms delay is required after off */
+		if (state == 0)
+			msleep(200);
 	}
 	return 0;
 }
