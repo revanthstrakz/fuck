@@ -468,6 +468,7 @@ static int __configure_pipe_params(struct msm_fb_data_type *mfd,
 	int ret = 0;
 	u32 left_lm_w = left_lm_w_from_mfd(mfd);
 	u32 flags;
+	bool is_right_blend = false;
 
 	struct mdss_mdp_mixer *mixer = NULL;
 	struct mdss_overlay_private *mdp5_data = mfd_to_mdp5_data(mfd);
@@ -575,6 +576,7 @@ static int __configure_pipe_params(struct msm_fb_data_type *mfd,
 	 * staging, same pipe will be stagged on both layer mixers.
 	 */
 	if (mdata->has_src_split) {
+		is_right_blend = pipe->is_right_blend;
 		if (left_blend_pipe) {
 			if (pipe->priority <= left_blend_pipe->priority) {
 				pr_err("priority limitation. left:%d right%d\n",
@@ -584,7 +586,7 @@ static int __configure_pipe_params(struct msm_fb_data_type *mfd,
 				goto end;
 			} else {
 				pr_debug("pipe%d is a right_pipe\n", pipe->num);
-				pipe->is_right_blend = true;
+				is_right_blend = true;
 			}
 		} else if (pipe->is_right_blend) {
 			/*
@@ -593,7 +595,7 @@ static int __configure_pipe_params(struct msm_fb_data_type *mfd,
 			 */
 			mdss_mdp_mixer_pipe_unstage(pipe, pipe->mixer_left);
 			mdss_mdp_mixer_pipe_unstage(pipe, pipe->mixer_right);
-			pipe->is_right_blend = false;
+			is_right_blend = false;
 		}
 
 		if (is_split_lm(mfd) && __layer_needs_src_split(layer)) {
@@ -619,6 +621,7 @@ static int __configure_pipe_params(struct msm_fb_data_type *mfd,
 			}
 			pipe->src_split_req = false;
 		}
+		pipe->is_right_blend = is_right_blend;
 	}
 
 	pipe->multirect.mode = vinfo->multirect.mode;
@@ -2150,6 +2153,12 @@ int mdss_mdp_layer_pre_commit_wfd(struct msm_fb_data_type *mfd,
 		wfd = mdp5_data->wfd;
 		output_layer = commit->output_layer;
 
+		if (output_layer->buffer.plane_count > MAX_PLANES) {
+			pr_err("Output buffer plane_count exceeds MAX_PLANES limit:%d\n",
+					output_layer->buffer.plane_count);
+			return -EINVAL;
+		}
+
 		data = mdss_mdp_wfd_add_data(wfd, output_layer);
 		if (IS_ERR_OR_NULL(data))
 			return PTR_ERR(data);
@@ -2180,6 +2189,14 @@ int mdss_mdp_layer_pre_commit_wfd(struct msm_fb_data_type *mfd,
 		sync_pt_data = &mfd->mdp_sync_pt_data;
 		mutex_lock(&sync_pt_data->sync_mutex);
 		count = sync_pt_data->acq_fen_cnt;
+
+		if (count >= MDP_MAX_FENCE_FD) {
+			pr_err("Reached maximum possible value for fence count\n");
+			mutex_unlock(&sync_pt_data->sync_mutex);
+			rc = -EINVAL;
+			goto input_layer_err;
+		}
+
 		sync_pt_data->acq_fen[count] = fence;
 		sync_pt_data->acq_fen_cnt++;
 		mutex_unlock(&sync_pt_data->sync_mutex);

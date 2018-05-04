@@ -1037,6 +1037,12 @@ static struct ipahal_reg_obj ipahal_reg_objs[IPA_HW_MAX][IPA_REG_MAX] = {
 	[IPA_HW_v3_0][IPA_QSB_MAX_READS] = {
 		ipareg_construct_qsb_max_reads, ipareg_parse_dummy,
 		0x00000078, 0},
+	[IPA_HW_v3_0][IPA_DPS_SEQUENCER_FIRST] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x0001e000, 0},
+	[IPA_HW_v3_0][IPA_HPS_SEQUENCER_FIRST] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x0001e080, 0},
 
 
 	/* IPAv3.1 */
@@ -1342,7 +1348,11 @@ void ipahal_get_aggr_force_close_valmask(int ep_idx,
 		IPAHAL_ERR("Input error\n");
 		return;
 	}
-
+	if (ep_idx > (sizeof(valmask->val) * 8 - 1)) {
+		IPAHAL_ERR("too big ep_idx %d\n", ep_idx);
+		ipa_assert();
+		return;
+	}
 	IPA_SETFIELD_IN_REG(valmask->val, 1 << ep_idx,
 		IPA_AGGR_FORCE_CLOSE_OFST_AGGR_FORCE_CLOSE_PIPE_BITMAP_SHFT,
 		IPA_AGGR_FORCE_CLOSE_OFST_AGGR_FORCE_CLOSE_PIPE_BITMAP_BMSK);
@@ -1350,6 +1360,7 @@ void ipahal_get_aggr_force_close_valmask(int ep_idx,
 	valmask->mask =
 		IPA_AGGR_FORCE_CLOSE_OFST_AGGR_FORCE_CLOSE_PIPE_BITMAP_BMSK <<
 		IPA_AGGR_FORCE_CLOSE_OFST_AGGR_FORCE_CLOSE_PIPE_BITMAP_SHFT;
+
 }
 
 void ipahal_get_fltrt_hash_flush_valmask(
