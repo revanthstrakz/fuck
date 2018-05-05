@@ -378,16 +378,15 @@ CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
 		  
 MODFLAGS	= -DMODULE $(OPTFLAGS)
-OPTFLAGS	= -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math -fsingle-precision-constant -ftree-vectorize -O3 -mtune=cortex-a53 -fno-tree-loop-if-convert -fno-split-wide-types -fno-tree-cselim -fno-ipa-pure-const -fno-tree-slp-vectorize -fno-tree-dse -fno-tree-loop-im -fno-merge-constants -fno-common -fconserve-stack -fno-caller-saves -fno-tree-tail-merge -fno-inline-functions-called-once -funroll-loops -fgcse-las -fno-cse-follow-jumps -fno-sched-dep-count-heuristic -fno-tree-phiprop -fno-tree-slsr -funroll-all-loops -fno-tree-loop-distribute-patterns -fno-tree-coalesce-vars -fno-reorder-functions -fno-peephole2 -fno-sched-last-insn-heuristic -fno-ipa-sra -fsched-spec-load
+OPTFLAGS	= -mtune=cortex-a53 -fno-tree-loop-if-convert -fno-split-wide-types -fno-tree-cselim -fno-ipa-pure-const -fno-tree-slp-vectorize -fno-tree-dse -fno-tree-loop-im -fno-merge-constants -fno-common -fconserve-stack -fno-caller-saves -fno-tree-tail-merge -fno-inline-functions-called-once -funroll-loops -fgcse-las -fno-cse-follow-jumps -fno-sched-dep-count-heuristic -fno-tree-phiprop -fno-tree-slsr -funroll-all-loops -fno-tree-loop-distribute-patterns -fno-tree-coalesce-vars -fno-reorder-functions -fno-peephole2 -fno-sched-last-insn-heuristic -fno-ipa-sra -fsched-spec-load
 
 CFLAGS_MODULE   = $(MODFLAGS)
-AFLAGS_MODULE   = $(MODFLAGS)
+AFLAGS_MODULE   = 
 LDFLAGS_MODULE  = -T $(srctree)/scripts/module-common.lds
 CFLAGS_KERNEL	= $(OPTFLAGS)
 AFLAGS_KERNEL	= 
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage -fno-tree-loop-im
 CFLAGS_KCOV	= -fsanitize-coverage=trace-pc
-LDFLAGS		= -O3
 
 
 ifeq ($(cc-name),clang)
@@ -428,13 +427,13 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -Wno-attribu
 		   -fno-strict-aliasing -fno-common -fshort-wchar \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-		   -std=gnu89 $(CLANG_FLAGS)
+		   -std=gnu89 $(CLANG_FLAGS) $(OPTFLAGS)
 
-KBUILD_AFLAGS_KERNEL := $(OPTFLAGS)
-KBUILD_CFLAGS_KERNEL := $(OPTFLAGS)
+KBUILD_AFLAGS_KERNEL := 
+KBUILD_CFLAGS_KERNEL := 
 KBUILD_AFLAGS   := -D__ASSEMBLY__ $(CLANG_FLAGS)
-KBUILD_AFLAGS_MODULE  := $(MODFLAGS)
-KBUILD_CFLAGS_MODULE  := $(MODFLAGS)
+KBUILD_AFLAGS_MODULE  := 
+KBUILD_CFLAGS_MODULE  := 
 KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
