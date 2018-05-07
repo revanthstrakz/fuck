@@ -46,8 +46,8 @@
  * (to see the precise effective timeslice length of your workload,
  *  run vmstat and monitor the context-switches (cs) field)
  */
-unsigned int sysctl_sched_latency = 2000000ULL;
-unsigned int normalized_sysctl_sched_latency = 2000000ULL;
+unsigned int sysctl_sched_latency			= 2000000ULL;
+unsigned int normalized_sysctl_sched_latency		= 2000000ULL;
 
 /*
  * The initial- and re-scaling of tunables is configurable
@@ -65,11 +65,11 @@ enum sched_tunable_scaling sysctl_sched_tunable_scaling
  * Minimal preemption granularity for CPU-bound tasks:
  * (default: 1 msec * (1 + ilog(ncpus)), units: nanoseconds)
  */
-unsigned int sysctl_sched_min_granularity = 1000000ULL;
-unsigned int normalized_sysctl_sched_min_granularity = 1000000ULL;
+unsigned int sysctl_sched_min_granularity		= 1000000ULL;
+unsigned int normalized_sysctl_sched_min_granularity	= 1000000ULL;
 
 /*
- * is kept at sysctl_sched_latency / sysctl_sched_min_granularity
+ * This value is kept at sysctl_sched_latency/sysctl_sched_min_granularity
  */
 static unsigned int sched_nr_latency = 2;
 
@@ -95,8 +95,8 @@ unsigned int __read_mostly sysctl_sched_wake_to_idle = 0;
  * and reduces their over-scheduling. Synchronous workloads will still
  * have immediate wakeup/sleep latencies.
  */
-unsigned int sysctl_sched_wakeup_granularity = 500000UL;
-unsigned int normalized_sysctl_sched_wakeup_granularity = 500000UL;
+unsigned int sysctl_sched_wakeup_granularity		= 1000000UL;
+unsigned int normalized_sysctl_sched_wakeup_granularity	= 1000000UL;
 
 const_debug unsigned int sysctl_sched_migration_cost;
 
@@ -116,9 +116,9 @@ unsigned int __read_mostly sysctl_sched_shares_window = 10000000UL;
  * to consumption or the quota being specified to be smaller than the slice)
  * we will always only issue the remaining available time.
  *
- * default: 2 msec, units: microseconds
-  */
-unsigned int sysctl_sched_cfs_bandwidth_slice = 2000UL;
+ * (default: 2 msec, units: microseconds)
+ */
+unsigned int sysctl_sched_cfs_bandwidth_slice		= 2000UL;
 #endif
 
 static inline void update_load_add(struct load_weight *lw, unsigned long inc)
