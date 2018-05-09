@@ -37,7 +37,7 @@
 
 struct msm_vidc_drv *vidc_driver;
 
-uint32_t msm_vidc_pwr_collapse_delay = 2000;
+uint32_t msm_vidc_pwr_collapse_delay = 10000;
 
 static inline struct msm_vidc_inst *get_vidc_inst(struct file *filp, void *fh)
 {
@@ -496,11 +496,8 @@ static int msm_vidc_probe_vidc_device(struct platform_device *pdev)
 	}
 
 	core = kzalloc(sizeof(*core), GFP_KERNEL);
-	if (!core) {
-		dprintk(VIDC_ERR,
-			"Failed to allocate memory for device core\n");
+	if (!core)
 		return -ENOMEM;
-	}
 
 	dev_set_drvdata(&pdev->dev, core);
 	rc = msm_vidc_initialize_core(pdev, core);

@@ -62,7 +62,7 @@ struct cpuidle_state {
 };
 
 /* Idle State Flags */
-#define CPUIDLE_FLAG_TIME_VALID	(0x01) /* is residency time measurable? */
+#define CPUIDLE_FLAG_TIME_INVALID	(0x01) /* is residency time measurable? */
 #define CPUIDLE_FLAG_COUPLED	(0x02) /* state applies to multiple cpus */
 #define CPUIDLE_FLAG_TIMER_STOP (0x04)  /* timer is stopped on this state */
 
@@ -85,7 +85,6 @@ struct cpuidle_device {
 	struct list_head 	device_list;
 
 #ifdef CONFIG_ARCH_NEEDS_CPU_IDLE_COUPLED
-	int			safe_state_index;
 	cpumask_t		coupled_cpus;
 	struct cpuidle_coupled	*coupled;
 #endif
@@ -98,7 +97,7 @@ DECLARE_PER_CPU(struct cpuidle_device, cpuidle_dev);
  * cpuidle_get_last_residency - retrieves the last state's residency time
  * @dev: the target CPU
  *
- * NOTE: this value is invalid if CPUIDLE_FLAG_TIME_VALID isn't set
+ * NOTE: this value is invalid if CPUIDLE_FLAG_TIME_INVALID is set
  */
 static inline int cpuidle_get_last_residency(struct cpuidle_device *dev)
 {
@@ -231,8 +230,6 @@ struct cpuidle_governor {
 	int  (*select)		(struct cpuidle_driver *drv,
 					struct cpuidle_device *dev);
 	void (*reflect)		(struct cpuidle_device *dev, int index);
-
-	struct module 		*owner;
 };
 
 #ifdef CONFIG_CPU_IDLE

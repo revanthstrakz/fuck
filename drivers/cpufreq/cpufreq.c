@@ -228,7 +228,7 @@ struct cpufreq_policy *cpufreq_cpu_get(unsigned int cpu)
 	struct cpufreq_policy *policy = NULL;
 	unsigned long flags;
 
-	if (cpufreq_disabled() || (cpu >= nr_cpu_ids))
+	if (cpu >= nr_cpu_ids)
 		return NULL;
 
 	if (!down_read_trylock(&cpufreq_rwsem))
@@ -255,9 +255,6 @@ EXPORT_SYMBOL_GPL(cpufreq_cpu_get);
 
 void cpufreq_cpu_put(struct cpufreq_policy *policy)
 {
-	if (cpufreq_disabled())
-		return;
-
 	kobject_put(&policy->kobj);
 	up_read(&cpufreq_rwsem);
 }
@@ -627,9 +624,7 @@ static ssize_t store_##file_name					\
 	int ret;							\
 	struct cpufreq_policy new_policy;				\
 									\
-	ret = cpufreq_get_policy(&new_policy, policy->cpu);		\
-	if (ret)							\
-		return -EINVAL;						\
+	memcpy(&new_policy, policy, sizeof(*policy));			\
 									\
 	new_policy.min = new_policy.user_policy.min;			\
 	new_policy.max = new_policy.user_policy.max;			\
@@ -692,9 +687,7 @@ static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
 	char	str_governor[16];
 	struct cpufreq_policy new_policy;
 
-	ret = cpufreq_get_policy(&new_policy, policy->cpu);
-	if (ret)
-		return ret;
+	memcpy(&new_policy, policy, sizeof(*policy));
 
 	ret = sscanf(buf, "%15s", str_governor);
 	if (ret != 1)
@@ -1193,7 +1186,7 @@ static void cpufreq_policy_put_kobj(struct cpufreq_policy *policy)
 	 * proceed with unloading.
 	 */
 	pr_debug("waiting for dropping of refcount\n");
-	wait_for_completion(cmp);
+	wait_for_completion_interruptible(cmp);
 	pr_debug("wait complete\n");
 }
 
@@ -1324,6 +1317,9 @@ static int __cpufreq_add_dev(struct device *dev, struct subsys_interface *sif)
 	if (!recover_policy) {
 		policy->user_policy.min = policy->min;
 		policy->user_policy.max = policy->max;
+	} else {
+		policy->min = policy->user_policy.min;
+		policy->max = policy->user_policy.max;
 	}
 
 	down_write(&policy->rwsem);
@@ -2670,23 +2666,13 @@ int cpufreq_register_driver(struct cpufreq_driver *driver_data)
 	if (ret)
 		goto err_boost_unreg;
 
-	if (!(cpufreq_driver->flags & CPUFREQ_STICKY)) {
-		int i;
-		ret = -ENODEV;
-
-		/* check for at least one working CPU */
-		for (i = 0; i < nr_cpu_ids; i++)
-			if (cpu_possible(i) && per_cpu(cpufreq_cpu_data, i)) {
-				ret = 0;
-				break;
-			}
-
+	if (!(cpufreq_driver->flags & CPUFREQ_STICKY) &&
+	    list_empty(&cpufreq_policy_list)) {
 		/* if all ->init() calls failed, unregister */
-		if (ret) {
-			pr_debug("no CPU initialized for driver %s\n",
-				 driver_data->name);
-			goto err_if_unreg;
-		}
+		ret = -ENODEV;
+		pr_debug("%s: No CPU initialized for driver %s\n", __func__,
+			 driver_data->name);
+		goto err_if_unreg;
 	}
 
 	pr_info("driver %s up and running\n", driver_data->name);

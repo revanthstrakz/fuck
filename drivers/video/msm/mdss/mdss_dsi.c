@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -796,7 +796,7 @@ static ssize_t mdss_dsi_cmd_state_read(struct file *file, char __user *buf,
 	if (blen < 0)
 		return 0;
 
-	if (copy_to_user(buf, buffer, blen))
+	if (copy_to_user(buf, buffer, min(count, (size_t)blen+1)))
 		return -EFAULT;
 
 	*ppos += blen;
@@ -2539,7 +2539,7 @@ static void mdss_dsi_dba_work(struct work_struct *work)
 	} else {
 		pr_debug("%s: dba device not ready, queue again\n", __func__);
 		queue_delayed_work(ctrl_pdata->workq,
-				&ctrl_pdata->dba_work, HZ);
+				&ctrl_pdata->dba_work, msecs_to_jiffies(1000));
 	}
 }
 #else
@@ -2814,7 +2814,7 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 		if (IS_ENABLED(CONFIG_MSM_DBA) &&
 			pdata->panel_info.is_dba_panel) {
 				queue_delayed_work(ctrl_pdata->workq,
-					&ctrl_pdata->dba_work, HZ);
+					&ctrl_pdata->dba_work, msecs_to_jiffies(1000));
 		}
 		break;
 	case MDSS_EVENT_UPDATE_LIVEDISPLAY:

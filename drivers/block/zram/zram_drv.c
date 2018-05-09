@@ -624,13 +624,13 @@ static int zram_decompress_page(struct zram *zram, char *mem, u32 index)
 
 	if (!handle || zram_test_flag(meta, index, ZRAM_ZERO)) {
 		bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-		memset(mem, 0, PAGE_SIZE);
+		clear_page(mem);
 		return 0;
 	}
 
 	cmem = zs_map_object(meta->mem_pool, handle, ZS_MM_RO);
 	if (size == PAGE_SIZE)
-		memcpy(mem, cmem, PAGE_SIZE);
+		copy_page(mem, cmem);
 	else
 		ret = zcomp_decompress(zram->comp, cmem, size, mem);
 	zs_unmap_object(meta->mem_pool, handle);
@@ -792,7 +792,7 @@ static int zram_bvec_write(struct zram *zram, struct bio_vec *bvec, u32 index,
 
 	if ((clen == PAGE_SIZE) && !is_partial_io(bvec)) {
 		src = kmap_atomic(page);
-		memcpy(cmem, src, PAGE_SIZE);
+		copy_page(cmem, src);
 		kunmap_atomic(src);
 	} else {
 		memcpy(cmem, src, clen);
@@ -1320,7 +1320,7 @@ static int zram_add(void)
 	}
 	strlcpy(zram->compressor, default_compressor, sizeof(zram->compressor));
 	zram->meta = NULL;
-	zram->max_comp_streams = CONFIG_NR_CPUS;
+	zram->max_comp_streams = 2;
 
 	pr_info("Added device: %s\n", zram->disk->disk_name);
 	return device_id;

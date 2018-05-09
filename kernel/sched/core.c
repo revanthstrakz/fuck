@@ -755,7 +755,7 @@ int get_nohz_timer_target(int pinned)
 
 	rcu_read_lock();
 	for_each_domain(cpu, sd) {
-		for_each_cpu(i, sched_domain_span(sd)) {
+		for_each_cpu_and(i, sched_domain_span(sd), cpu_online_mask) {
 			if (!idle_cpu(i)) {
 				cpu = i;
 				goto unlock;
@@ -1146,7 +1146,7 @@ static void update_rq_clock_task(struct rq *rq, s64 delta)
 	rq->clock_task += delta;
 
 #if defined(CONFIG_IRQ_TIME_ACCOUNTING) || defined(CONFIG_PARAVIRT_TIME_ACCOUNTING)
-	if ((irq_delta + steal) && sched_feat(NONTASK_CAPACITY))
+	if (sched_feat(NONTASK_CAPACITY) && (irq_delta + steal) != 0)
 		sched_rt_avg_update(rq, irq_delta + steal);
 #endif
 }

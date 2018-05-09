@@ -2281,7 +2281,25 @@ repeat:
 			if (get_work_pwq(work) == pwq)
 				move_linked_works(work, scheduled, &n);
 
-		process_scheduled_works(rescuer);
+		if (!list_empty(scheduled)) {
+			process_scheduled_works(rescuer);
+
+			/*
+			 * The above execution of rescued work items could
+			 * have created more to rescue through
+			 * pwq_activate_first_delayed() or chained
+			 * queueing.  Let's put @pwq back on mayday list so
+			 * that such back-to-back work items, which may be
+			 * being used to relieve memory pressure, don't
+			 * incur MAYDAY_INTERVAL delay inbetween.
+			 */
+			if (need_to_create_worker(pool)) {
+				spin_lock(&wq_mayday_lock);
+				get_pwq(pwq);
+				list_move_tail(&pwq->mayday_node, &wq->maydays);
+				spin_unlock(&wq_mayday_lock);
+			}
+		}
 
 		/*
 		 * Put the reference grabbed by send_mayday().  @pool won't
@@ -2867,6 +2885,31 @@ bool flush_delayed_work(struct delayed_work *dwork)
 }
 EXPORT_SYMBOL(flush_delayed_work);
 
+static bool __cancel_work(struct work_struct *work, bool is_dwork)
+{
+	unsigned long flags;
+	int ret;
+
+	do {
+		ret = try_to_grab_pending(work, is_dwork, &flags);
+	} while (unlikely(ret == -EAGAIN));
+
+	if (unlikely(ret < 0))
+		return false;
+
+	set_work_pool_and_clear_pending(work, get_work_pool_id(work));
+	local_irq_restore(flags);
+	return ret;
+}
+
+/*
+ * See cancel_delayed_work()
+ */
+bool cancel_work(struct work_struct *work)
+{
+	return __cancel_work(work, false);
+}
+
 /**
  * cancel_delayed_work - cancel a delayed work
  * @dwork: delayed_work to cancel
@@ -2885,20 +2928,7 @@ EXPORT_SYMBOL(flush_delayed_work);
  */
 bool cancel_delayed_work(struct delayed_work *dwork)
 {
-	unsigned long flags;
-	int ret;
-
-	do {
-		ret = try_to_grab_pending(&dwork->work, true, &flags);
-	} while (unlikely(ret == -EAGAIN));
-
-	if (unlikely(ret < 0))
-		return false;
-
-	set_work_pool_and_clear_pending(&dwork->work,
-					get_work_pool_id(&dwork->work));
-	local_irq_restore(flags);
-	return ret;
+	return __cancel_work(&dwork->work, true);
 }
 EXPORT_SYMBOL(cancel_delayed_work);
 
